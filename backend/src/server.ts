@@ -1,18 +1,27 @@
 import express, { Request, Response, Application } from 'express';
+import cors from 'cors'; 
+import simulationRoutes from './routes/simulation.routes';
 
 const app: Application = express();
-const PORT = process.env.PORT || 3001; // Backend will run on port 3001
+const PORT = process.env.PORT || 3001;
 
-// Middleware to parse JSON bodies
+// parsing json body
 app.use(express.json());
 
-// A simple test route
+// CORS 
+const corsOptions = {
+  origin: 'http://localhost:3000', // allows my  frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  optionsSuccessStatus: 200 // support
+};
+app.use(cors(corsOptions)); //  cors middleware
+
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'Backend is healthy as a doctor house!', timestamp: new Date().toISOString() });
 });
 
-// Placeholder for future simulation routes
-// app.use('/api/simulation', simulationRoutes); // You'll create simulationRoutes later
+app.use('/api/simulation', simulationRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend server is running on http://localhost:${PORT}`);

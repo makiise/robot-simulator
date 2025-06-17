@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19"
+  },
+  "scripts": {
+    "start": "node -r tsconfig-paths/register dist/server.js",
+    "build": "tsc",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "jest -r tsconfig-paths/register" 
+    }
+}
