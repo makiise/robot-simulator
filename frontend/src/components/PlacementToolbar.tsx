@@ -1,24 +1,22 @@
 // In frontend/src/components/PlacementToolbar.tsx
 
 import React from 'react';
-import './PlacementToolbar.css'; // We'll add styles in the next step
+import './PlacementToolbar.css';
 
-// This defines the types of items a user can select. 'null' means nothing is selected.
 export type SelectableItem = 'CERBERUS_BASIC' | 'GARBAGE_BASIC' | null;
 
-// This defines the props (inputs) our component will need from its parent.
 interface PlacementToolbarProps {
   budget: number;
   selectedItem: SelectableItem;
-  onSelectItem: (item: SelectableItem) => void; // This is a function to tell the parent which item was clicked.
+  onSelectItem: (item: SelectableItem) => void;
 }
+
+const CERBERUS_COST = 100; // Define the cost for disabling the button
 
 const PlacementToolbar: React.FC<PlacementToolbarProps> = ({ budget, selectedItem, onSelectItem }) => {
 
-  // A small helper function to handle clicking on the buttons
+    console.log("3. PlacementToolbar received budget prop:", budget);
   const handleSelect = (item: SelectableItem) => {
-    // If the user clicks the currently selected button, it deselects it (sets to null).
-    // Otherwise, it selects the new item.
     onSelectItem(selectedItem === item ? null : item);
   };
 
@@ -29,10 +27,10 @@ const PlacementToolbar: React.FC<PlacementToolbarProps> = ({ budget, selectedIte
         <strong>Budget:</strong> ${budget}
       </div>
       <div className="toolbar-actions">
-        {/* The 'className' changes dynamically to show which button is selected */}
         <button 
           className={selectedItem === 'CERBERUS_BASIC' ? 'selected' : ''}
           onClick={() => handleSelect('CERBERUS_BASIC')}
+          disabled={budget < CERBERUS_COST} // Proactively disable if user can't afford it
         >
           Place Cerberus (Basic)
         </button>
@@ -43,7 +41,6 @@ const PlacementToolbar: React.FC<PlacementToolbarProps> = ({ budget, selectedIte
           Place Garbage (Basic)
         </button>
       </div>
-      {/* This message will only appear if an item is selected */}
       {selectedItem && (
         <p className="toolbar-selection-info">
           Selected: <strong>{selectedItem}</strong>. Click on the grid to place.

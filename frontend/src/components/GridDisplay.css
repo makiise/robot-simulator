@@ -15,3 +15,7 @@
   align-items: center;
   font-size: 24px;
 }
+.grid-cell:hover {
+  background-color: #3e3e3e;
+  cursor: pointer;
+}

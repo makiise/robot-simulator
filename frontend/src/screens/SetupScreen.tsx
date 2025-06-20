@@ -1,50 +1,84 @@
 // In frontend/src/screens/SetupScreen.tsx
 
 import React, { useState } from 'react';
+
+// Component Imports
 import GridConfigForm from '../components/GridConfigForm';
 import GridDisplay from '../components/GridDisplay';
-import { GridData } from '../types/simulation';
-import { configureSimulation } from '../services/api';
-// <-- 1. Import the new toolbar component and the SelectableItem type
 import PlacementToolbar, { SelectableItem } from '../components/PlacementToolbar';
+import SimulationControls from '../components/SimulationControls';
+
+// API and Type Imports
+import { 
+  configureSimulation, 
+  placeRobot, 
+  placeItem, 
+  getSimulationState,
+  SimulationState 
+} from '../services/api';
 
 const SetupScreen = () => {
-  const [gridData, setGridData] = useState<GridData | null>(null);
-  const [budget, setBudget] = useState<number>(0);
-  // <-- 2. Add state to track which item is selected in the toolbar
+  const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectableItem>(null);
 
   const handleCreateGrid = async (rows: number, cols: number, initialBudget: number) => {
     try {
-      const response = await configureSimulation(rows, cols, initialBudget);
-     setGridData(response.grid);;
-      setBudget(response.budget);
+      const initialConfig = await configureSimulation(rows, cols, initialBudget);
+      const fullInitialState: SimulationState = {
+        grid: initialConfig.grid,
+        currentBudget: initialConfig.budget,
+        robots: [],
+        tasks: []
+      };
+      setSimulationState(fullInitialState);
     } catch (error) {
       console.error("Failed to configure simulation:", error);
-      alert("Error connecting to the backend. Please ensure the server is running and try again.");
+      alert("Error setting up grid. Please ensure the backend server is running and accessible.");
     }
   };
 
+  const handleCellClick = async (x: number, y: number) => {
+    if (!selectedItem) {
+      return;
+    }
+    try {
+      if (selectedItem === 'CERBERUS_BASIC') {
+        await placeRobot('CERBERUS_BASIC', x, y); 
+      } else if (selectedItem === 'GARBAGE_BASIC') {
+        await placeItem('GARBAGE_BASIC', x, y);
+      } else {
+        return;
+      }
+      const updatedState = await getSimulationState();
+      console.log("1. Received from getSimulationState API:", updatedState); 
+      setSimulationState(updatedState);
+      setSelectedItem(null); 
+    } catch (error: any) {
+      console.error("Failed to place item:", error);
+      alert(`Placement Failed: ${error.response?.data?.message || error.message}`);
+    }
+  };
+  console.log("2. SetupScreen rendering with state:", simulationState);
+
   return (
     <div>
-      {!gridData ? (
+      {!simulationState ? (
         <div>
           <h2>Step 1: Configure Your Simulation</h2>
           <GridConfigForm onConfigSubmit={handleCreateGrid} /> 
         </div>
       ) : (
-        // This is the main view after the grid is created
         <div>
-          {/* We've removed the old title and will let the components have their own */}
-          
-          {/* <-- 3. Add the PlacementToolbar here */}
           <PlacementToolbar 
-            budget={budget} 
+            budget={simulationState.currentBudget} 
             selectedItem={selectedItem}
-            onSelectItem={setSelectedItem} // We pass the state "setter" function directly as a prop
+            onSelectItem={setSelectedItem}
           />
-
-          <GridDisplay gridData={gridData} />
+          <GridDisplay 
+            gridData={simulationState.grid}
+            onCellClick={handleCellClick}
+          />
+          <SimulationControls />
         </div>
       )}
     </div>

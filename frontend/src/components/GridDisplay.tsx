@@ -1,38 +1,41 @@
 // In frontend/src/components/GridDisplay.tsx
-
 import React from 'react';
 import './GridDisplay.css';
-import { GridData, GridCell } from '../types/simulation'; // <-- 1. Import our types
+import { GridData, GridCell } from '../types/simulation';
 
-// 2. Change the component's props to accept the 'gridData' object
+// Define a new prop for the click handler
 interface GridDisplayProps {
   gridData: GridData;
+  onCellClick: (x: number, y: number) => void; // A function that takes x, y coordinates
 }
 
-// This is a small helper function that checks a cell's content and returns the right visual
 const renderCellContent = (cell: GridCell) => {
-  if (cell.content === 'BOMB') {
-    return '💣'; // If the content is 'BOMB', return the bomb emoji
+  switch (cell.content) {
+    case 'BOMB': return '💣';
+    case 'ROBOT': return '🤖';
+    case 'GARBAGE': return '🗑️';
+    default: return null;
   }
-  return null; // Otherwise, return nothing
 };
 
-const GridDisplay: React.FC<GridDisplayProps> = ({ gridData }) => {
-  // Get the number of columns from the gridData itself
+const GridDisplay: React.FC<GridDisplayProps> = ({ gridData, onCellClick }) => {
   const cols = gridData[0]?.length || 0;
 
+  const handleCellClick = (index: number) => {
+    if (cols === 0) return;
+    const x = index % cols;
+    const y = Math.floor(index / cols);
+    onCellClick(x, y); // Call the parent's function with the calculated coordinates
+  };
+
   return (
-    <div 
-      className="grid-container" 
-      style={{ gridTemplateColumns: `repeat(${cols}, 40px)` }}
-    >
-      {/* 
-        3. We now map directly over the data from the backend.
-        .flat() converts the 2D array [[]] into a simple 1D array [] to make it easier to map.
-      */}
+    <div className="grid-container" style={{ gridTemplateColumns: `repeat(${cols}, 40px)` }}>
       {gridData.flat().map((cell, index) => (
-        <div key={index} className="grid-cell">
-          {/* For each cell, we call our helper function to see what should be displayed inside it */}
+        <div 
+          key={index} 
+          className="grid-cell"
+          onClick={() => handleCellClick(index)} // Add the onClick event
+        >
           {renderCellContent(cell)}
         </div>
       ))}

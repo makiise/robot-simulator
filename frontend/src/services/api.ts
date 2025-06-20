@@ -23,3 +23,52 @@ export const configureSimulation = async (rows: number, cols: number, initialBud
   // Return the data part of the response (which contains gridData and budget).
   return response.data;
 };
+
+// Add this code to the end of frontend/src/services/api.ts
+
+// It's good practice to define the shape of the full simulation state
+export interface Robot {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  hp: number;
+}
+
+export interface Task {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+}
+
+export interface SimulationState {
+  grid: GridData;
+  robots: Robot[];
+  tasks: Task[];
+  currentBudget: number;
+  // We'll add more properties like gameStatus later
+}
+
+// Function to place a robot
+export const placeRobot = async (type: string, x: number, y: number) => {
+  const response = await axios.post<SimulationState>(
+    `${API_BASE_URL}/simulation/place/robot`, 
+    { type, x, y }
+  );
+  return response.data;
+};
+
+// Function to place an item/task
+export const placeItem = async (type: string, x: number, y: number) => {
+  const response = await axios.post<SimulationState>(
+    `${API_BASE_URL}/simulation/place/item`,
+    { type, x, y }
+  );
+  return response.data;
+};
+
+export const getSimulationState = async () => {
+  const response = await axios.get<SimulationState>(`${API_BASE_URL}/simulation/state`);
+  return response.data;
+};
