@@ -72,3 +72,10 @@ export const getSimulationState = async () => {
   const response = await axios.get<SimulationState>(`${API_BASE_URL}/simulation/state`);
   return response.data;
 };
+
+// Add this to the end of frontend/src/services/api.ts
+
+export const startSimulation = async (strategy: string) => {
+  // This endpoint might not return anything significant, just a success message.
+  await axios.post(`${API_BASE_URL}/simulation/start`, { strategy });
+};
