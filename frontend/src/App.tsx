@@ -5,34 +5,32 @@ import SetupScreen from './screens/SetupScreen';
 import SimulationScreen from './screens/SimulationScreen';
 import './App.css';
 
-// We define the possible views our application can have.
 type AppView = 'SETUP' | 'SIMULATION';
 
 function App() {
-  // This state variable controls which screen is currently visible.
   const [currentView, setCurrentView] = useState<AppView>('SETUP');
+  // We add a 'key' to the SetupScreen to force it to re-mount and reset its internal state when we navigate back to it.
+  const [setupScreenKey, setSetupScreenKey] = useState(Date.now());
 
-  // We create a function that can be passed down to the SetupScreen.
-  // When called, it will change the view to 'SIMULATION'.
   const startSimulationView = () => {
     setCurrentView('SIMULATION');
+  };
+
+  const resetApp = () => {
+    setSetupScreenKey(Date.now()); // Change the key to force a reset
+    setCurrentView('SETUP');
   };
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>Robot Task Simulator</h1>
-
-        {/* This is a conditional render. It checks the value of currentView. */}
         {currentView === 'SETUP' && (
-          // If the view is 'SETUP', render the SetupScreen.
-          // We pass it the function so it can tell the App to switch views.
-          <SetupScreen onStartSimulation={startSimulationView} />
+          <SetupScreen key={setupScreenKey} onStartSimulation={startSimulationView} />
         )}
-
         {currentView === 'SIMULATION' && (
-          // If the view is 'SIMULATION', render the SimulationScreen.
-          <SimulationScreen />
+          // Pass the reset function down to the simulation screen
+          <SimulationScreen onReset={resetApp} />
         )}
       </header>
     </div>

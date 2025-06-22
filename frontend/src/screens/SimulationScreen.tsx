@@ -1,71 +1,121 @@
 // In frontend/src/screens/SimulationScreen.tsx
 
-import React, { useState, useEffect } from 'react';
-import { getSimulationState, SimulationState } from '../services/api';
-import GridDisplay from '../components/GridDisplay'; // We will reuse our GridDisplay component
+import React, { useState, useEffect, useRef } from 'react';
+import { controlSimulation, getSimulationState, SimulationState } from '../services/api';
+import GridDisplay from '../components/GridDisplay';
+import InfoPanel from '../components/InfoPanel'; 
+import SimulationControls, { ControlStatus } from '../components/SimulationControls'; // Import the new status type
 
-const POLLING_INTERVAL_MS = 1000; // Ask the backend for updates every 1 second
+const POLLING_INTERVAL_MS = 1000; // 1 second
 
-const SimulationScreen = () => {
-  // This state will hold the latest data we get from the backend
+// 1. DEFINE THE PROPS FOR THIS COMPONENT
+interface SimulationScreenProps {
+  onReset: () => void; // It now expects a function called onReset
+}
+
+// 2. UPDATE THE COMPONENT TO ACCEPT THE PROPS
+const SimulationScreen: React.FC<SimulationScreenProps> = ({ onReset }) => {
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // The useEffect hook is a standard React feature for handling side effects,
-  // like timers, intervals, and API calls after the component renders.
-  useEffect(() => {
-    // This is the function that will be called repeatedly to get updates
+  // useRef is used to hold the interval ID so it doesn't get lost between re-renders
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // This function starts the polling interval
+  const startPolling = () => {
+    // Clear any existing interval before starting a new one
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
     const fetchState = async () => {
       try {
         const state = await getSimulationState();
         setSimulationState(state);
+        // If the game is won or lost, stop polling
+        if (state.gameStatus === 'WON' || state.gameStatus === 'LOST') {
+          stopPolling();
+        }
       } catch (err) {
-        console.error("Polling failed: Failed to fetch simulation state:", err);
-        setError("Connection to the simulation server was lost.");
-        // We'll stop the interval if there's an error
-        clearInterval(intervalId);
+        console.error("Polling failed:", err);
+        setError("Connection lost.");
+        stopPolling();
       }
     };
+    fetchState(); // Fetch immediately
+    intervalRef.current = setInterval(fetchState, POLLING_INTERVAL_MS);
+  };
 
-    // --- Setting up the polling ---
-    // 1. Fetch the state immediately when the screen first loads
-    fetchState();
+  // This function stops the polling
+  const stopPolling = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
 
-    // 2. Set up an interval to call fetchState every second
-    const intervalId = setInterval(fetchState, POLLING_INTERVAL_MS);
+  // This effect hook manages the polling lifecycle
+  useEffect(() => {
+    startPolling();
+    // This is the cleanup function that runs when the component is unmounted
+    return () => stopPolling();
+  }, []); // The empty [] means this effect runs only once on mount
 
-    // 3. This is a crucial cleanup function. 
-    // When this component is removed from the screen, React will run this function.
-    // We clear the interval to prevent it from running in the background forever, which causes memory leaks.
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []); // The empty `[]` at the end means this useEffect runs only ONCE when the component first mounts.
+  // --- HANDLERS FOR THE CONTROLS ---
+  const handlePauseToggle = async () => {
+    try {
+      await controlSimulation('PAUSE'); // We only have one 'PAUSE' action that toggles
+      if (isPaused) {
+        startPolling(); // If it was paused, resume polling
+      } else {
+        stopPolling(); // If it was running, stop polling
+      }
+      setIsPaused(!isPaused); // Toggle the local paused state
+    } catch (error) {
+      console.error("Failed to pause/resume simulation", error);
+    }
+  };
 
-  // --- Render Logic ---
-  // Show an error message if the polling fails
-  if (error) {
-    return <div>Error: {error}</div>;
+  const handleReset = async () => {
+    try {
+      stopPolling(); // Stop polling immediately
+      await controlSimulation('RESET');
+      onReset(); // Call the function from App.tsx to go back to the setup screen
+    } catch (error) {
+      console.error("Failed to reset simulation", error);
+    }
+  };
+
+
+  // --- RENDER LOGIC ---
+  if (error) return <div>Error: {error}</div>;
+  if (!simulationState) return <div>Loading Simulation...</div>;
+
+  // Determine the control status based on the game state
+  let controlStatus: ControlStatus = 'RUNNING';
+  if (isPaused) controlStatus = 'PAUSED';
+  if (simulationState.gameStatus === 'WON' || simulationState.gameStatus === 'LOST') {
+    controlStatus = 'ENDED';
   }
-
-  // Show a loading message until we get the first successful response from the backend
-  if (!simulationState) {
-    return <div>Loading Simulation...</div>;
-  }
-
-  // This is a placeholder function because the grid is not interactive during the simulation.
-  const onCellClick = () => {};
 
   return (
     <div>
-      <h2>Simulation Running</h2>
-      <p>Current Budget: ${simulationState.currentBudget}</p>
-      {/* We can add more info here later, like tick count */}
+      {/* 3. BASIC WIN/LOSS DISPLAY (F.F20) */}
+      {simulationState.gameStatus === 'WON' && <h2>Congratulations, You Won!</h2>}
+      {simulationState.gameStatus === 'LOST' && <h2>Game Over!</h2>}
+      
+      {/* 4. BASIC INFORMATION DISPLAY (F.F19) */}
+      <InfoPanel robots={simulationState.robots} />
 
-      {/* We cleverly reuse our existing GridDisplay component to show the live grid! */}
       <GridDisplay 
         gridData={simulationState.grid} 
-        onCellClick={onCellClick}
+        onCellClick={() => {}} // Grid is not clickable during simulation
+      />
+      
+      {/* 5. PAUSE/RESET UI (F.F17) */}
+      <SimulationControls 
+        status={controlStatus} 
+        onPause={handlePauseToggle}
+        onReset={handleReset}
       />
     </div>
   );

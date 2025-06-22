@@ -31,13 +31,16 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   const handleCreateGrid = async (rows: number, cols: number, initialBudget: number) => {
     try {
       const initialConfig = await configureSimulation(rows, cols, initialBudget);
+    // In handleCreateGrid in SetupScreen.tsx
+
       const fullInitialState: SimulationState = {
-        ...initialConfig, // Use spread syntax for any other properties
         grid: initialConfig.grid,
         currentBudget: initialConfig.budget,
         robots: [],
-        tasks: []
+        tasks: [],
+        gameStatus: 'SETUP' // <-- ADD THIS LINE to satisfy the type requirement
       };
+      
       setSimulationState(fullInitialState);
     } catch (error) {
       console.error("Failed to configure simulation:", error);
@@ -97,7 +100,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
             onCellClick={handleCellClick}
           />
           {/* 4. Pass the new handler function to the onStart prop of SimulationControls */}
-          <SimulationControls onStart={handleStartSimulation} />
+          <SimulationControls status="SETUP" onStart={handleStartSimulation} />
         </div>
       )}
     </div>

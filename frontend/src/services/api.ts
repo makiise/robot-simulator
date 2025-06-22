@@ -1,5 +1,6 @@
 // In frontend/src/services/api.ts
 
+
 import axios from 'axios';
 import { GridData } from '../types/simulation'; // Import the types 
 
@@ -33,6 +34,20 @@ export interface Robot {
   x: number;
   y: number;
   hp: number;
+}
+// In frontend/src/services/api.ts
+
+export interface SimulationState {
+  grid: GridData;
+  robots: Robot[];
+  tasks: Task[];
+  currentBudget: number;
+  gameStatus: 'SETUP' | 'RUNNING' | 'PAUSED' | 'WON' | 'LOST'; // <-- ADD THIS LINE
+  // Add other optional properties for completeness
+  initialBudget?: number;
+  isRunning?: boolean;
+  rows?: number;
+  cols?: number;
 }
 
 export interface Task {
@@ -78,4 +93,11 @@ export const getSimulationState = async () => {
 export const startSimulation = async (strategy: string) => {
   // This endpoint might not return anything significant, just a success message.
   await axios.post(`${API_BASE_URL}/simulation/start`, { strategy });
+};
+
+// Add this to the end of frontend/src/services/api.ts
+
+export const controlSimulation = async (action: 'PAUSE' | 'RESET') => {
+  // This endpoint might not return anything significant, just a success status.
+  await axios.post(`${API_BASE_URL}/simulation/control`, { action });
 };
