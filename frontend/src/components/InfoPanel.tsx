@@ -1,10 +1,10 @@
-// In frontend/src/components/InfoPanel.tsx
+
 
 import React from 'react';
-// We need to import the Robot type definition from our API service file
+
 import { Robot } from '../services/api'; 
 
-// Define the props this component expects
+
 interface InfoPanelProps {
   robots: Robot[];
   // In the future, you could add more props like:
@@ -20,7 +20,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ robots }) => {
         <p>No robots were deployed.</p>
       ) : (
         <ul style={{ margin: 0, padding: 0 }}>
-          {/* We map over the array of robots passed in as a prop */}
+          {}
           {robots.map(robot => (
             <li key={robot.id} style={{ listStyle: 'none', padding: '5px 0' }}>
               <strong>{robot.type} (ID: {robot.id}):</strong> HP: <span style={{ color: robot.hp > 50 ? '#aaeebb' : '#f87171' }}>{robot.hp}</span>

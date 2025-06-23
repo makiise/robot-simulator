@@ -1,4 +1,4 @@
-// In frontend/src/screens/SetupScreen.tsx
+
 
 import React, { useState } from 'react';
 
@@ -8,22 +8,22 @@ import GridDisplay from '../components/GridDisplay';
 import PlacementToolbar, { SelectableItem } from '../components/PlacementToolbar';
 import SimulationControls from '../components/SimulationControls';
 
-// API and Type Imports
+
 import { 
   configureSimulation, 
   placeRobot, 
   placeItem, 
   getSimulationState,
-  startSimulation, // <-- Import the function to start the simulation
+  startSimulation, 
   SimulationState 
 } from '../services/api';
 
-// 1. Define the props that this screen will now receive from App.tsx
+
 interface SetupScreenProps {
   onStartSimulation: () => void;
 }
 
-// 2. Update the component definition to accept the new props
+
 const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectableItem>(null);
@@ -31,14 +31,13 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   const handleCreateGrid = async (rows: number, cols: number, initialBudget: number) => {
     try {
       const initialConfig = await configureSimulation(rows, cols, initialBudget);
-    // In handleCreateGrid in SetupScreen.tsx
 
       const fullInitialState: SimulationState = {
         grid: initialConfig.grid,
         currentBudget: initialConfig.budget,
         robots: [],
         tasks: [],
-        gameStatus: 'SETUP' // <-- ADD THIS LINE to satisfy the type requirement
+        gameStatus: 'SETUP' 
       };
       
       setSimulationState(fullInitialState);
@@ -67,13 +66,13 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
     }
   };
 
-  // 3. This new handler is called when the "Start Simulation" button is clicked
+
   const handleStartSimulation = async () => {
     try {
-      // Call the backend to tell it to start the simulation process
-      await startSimulation('NEAREST_BASIC'); // We hardcode the strategy for now
+
+      await startSimulation('NEAREST_BASIC'); 
       
-      // Call the function passed down from App.tsx. This will switch the view to SimulationScreen.
+
       onStartSimulation();
     } catch (error) {
       console.error("Failed to start simulation:", error);
@@ -82,29 +81,57 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   };
 
   return (
-    <div>
-      {!simulationState ? (
-        <div>
-          <h2>Step 1: Configure Your Simulation</h2>
-          <GridConfigForm onConfigSubmit={handleCreateGrid} /> 
-        </div>
-      ) : (
-        <div>
-          <PlacementToolbar 
-            budget={simulationState.currentBudget} 
-            selectedItem={selectedItem}
-            onSelectItem={setSelectedItem}
-          />
-          <GridDisplay 
+  <div>
+    {!simulationState ? (
+      <div>
+        <h2>Step 1: Configure Your Simulation</h2>
+        <GridConfigForm onConfigSubmit={handleCreateGrid} />
+      </div>
+    ) : (
+      <div
+        style={{
+          display: 'flex',
+          gap: '20px',
+          alignItems: 'stretch', 
+        }}
+      >
+        {}
+        <div style={{ flex: 2 }}>
+          <GridDisplay
             gridData={simulationState.grid}
             onCellClick={handleCellClick}
           />
-          {/* 4. Pass the new handler function to the onStart prop of SimulationControls */}
-          <SimulationControls status="SETUP" onStart={handleStartSimulation} />
         </div>
-      )}
-    </div>
-  );
+
+        {}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            height: '100%',
+            marginTop: '20px', 
+          }}
+        >
+          <div style={{ flex: 2 }}>
+            <SimulationControls status="SETUP" onStart={handleStartSimulation} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <PlacementToolbar
+              budget={simulationState.currentBudget}
+              selectedItem={selectedItem}
+              onSelectItem={setSelectedItem}
+            />
+          </div>
+          
+        </div>
+
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default SetupScreen;

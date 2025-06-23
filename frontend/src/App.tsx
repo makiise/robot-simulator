@@ -1,37 +1,42 @@
-// In frontend/src/App.tsx
+
 
 import React, { useState } from 'react';
 import SetupScreen from './screens/SetupScreen';
 import SimulationScreen from './screens/SimulationScreen';
-import './App.css';
+import BackgroundIcons from './components/BackgroundIcons';
+import styles from './App.module.css';
 
 type AppView = 'SETUP' | 'SIMULATION';
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('SETUP');
-  // We add a 'key' to the SetupScreen to force it to re-mount and reset its internal state when we navigate back to it.
   const [setupScreenKey, setSetupScreenKey] = useState(Date.now());
+
+
 
   const startSimulationView = () => {
     setCurrentView('SIMULATION');
   };
 
   const resetApp = () => {
-    setSetupScreenKey(Date.now()); // Change the key to force a reset
+    setSetupScreenKey(Date.now());
     setCurrentView('SETUP');
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Robot Task Simulator</h1>
-        {currentView === 'SETUP' && (
-          <SetupScreen key={setupScreenKey} onStartSimulation={startSimulationView} />
-        )}
-        {currentView === 'SIMULATION' && (
-          // Pass the reset function down to the simulation screen
-          <SimulationScreen onReset={resetApp} />
-        )}
+    <div className={styles.App} style={{ position: 'relative', overflow: 'hidden' }}>
+      <header className={styles.AppHeader}>
+        <BackgroundIcons />
+        {}
+        <div className={styles.foregroundContent}>
+          <h1>Robot Task Simulator</h1>
+          {currentView === 'SETUP' && (
+            <SetupScreen key={setupScreenKey} onStartSimulation={startSimulationView} />
+          )}
+          {currentView === 'SIMULATION' && (
+            <SimulationScreen onReset={resetApp} />
+          )}
+        </div>
       </header>
     </div>
   );
