@@ -27,6 +27,10 @@ interface SetupScreenProps {
 const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectableItem>(null);
+  const [simSpeed, setSimSpeed] = useState<number>(5);
+  const [selectedStrategy, setSelectedStrategy] = useState<string>('NEAREST_BASIC');
+
+
 
   const handleCreateGrid = async (rows: number, cols: number, initialBudget: number) => {
     try {
@@ -37,7 +41,8 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
         currentBudget: initialConfig.budget,
         robots: [],
         tasks: [],
-        gameStatus: 'SETUP' 
+        gameStatus: 'SETUP',
+        tickCount: 0,
       };
       
       setSimulationState(fullInitialState);
@@ -68,17 +73,15 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
 
 
   const handleStartSimulation = async () => {
-    try {
+  try {
+    await startSimulation(selectedStrategy);
+    onStartSimulation();
+  } catch (error) {
+    console.error("Failed to start simulation:", error);
+    alert("Could not start the simulation. Check the backend server.");
+  }
+};
 
-      await startSimulation('NEAREST_BASIC'); 
-      
-
-      onStartSimulation();
-    } catch (error) {
-      console.error("Failed to start simulation:", error);
-      alert("Could not start the simulation. Check the backend server.");
-    }
-  };
 
   return (
   <div>
@@ -92,10 +95,9 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
         style={{
           display: 'flex',
           gap: '20px',
-          alignItems: 'stretch', 
+          alignItems: 'stretch',
         }}
       >
-        {}
         <div style={{ flex: 2 }}>
           <GridDisplay
             gridData={simulationState.grid}
@@ -103,7 +105,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
           />
         </div>
 
-        {}
         <div
           style={{
             flex: 1,
@@ -111,11 +112,17 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
             flexDirection: 'column',
             gap: '10px',
             height: '100%',
-            marginTop: '20px', 
+            marginTop: '20px',
           }}
         >
           <div style={{ flex: 2 }}>
-            <SimulationControls status="SETUP" onStart={handleStartSimulation} />
+            <SimulationControls
+              status="SETUP"
+              onStart={handleStartSimulation}
+              selectedStrategy={selectedStrategy}
+              onStrategyChange={setSelectedStrategy}
+            />
+
           </div>
           <div style={{ flex: 1 }}>
             <PlacementToolbar
@@ -124,13 +131,49 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
               onSelectItem={setSelectedItem}
             />
           </div>
-          
         </div>
+      </div>
+    )}
+
+    {/* Decorative Speed Slider */}
+    {simulationState && (
+      <div style={{ marginTop: '30px' }}>
+        <h3>Simulation Speed (decorative only)</h3>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={simSpeed}
+          onChange={(e) => setSimSpeed(Number(e.target.value))}
+          style={{ width: '300px' }}
+        />
+        <span style={{ marginLeft: '10px' }}>
+          Speed: {simSpeed}
+        </span>
 
       </div>
     )}
+    {simulationState && (simulationState.gameStatus === 'WON' || simulationState.gameStatus === 'LOST') && (
+  <div style={{
+    position: 'fixed',
+    top: '30%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    color: 'white',
+    padding: '40px 60px',
+    fontSize: '36px',
+    borderRadius: '12px',
+    textAlign: 'center',
+    zIndex: 1000
+  }}>
+    {simulationState.gameStatus === 'WON' ? '🎉 You Won! 🎉' : '💀 Game Over! 💀'}
+  </div> // End of won/lost message, but it doesnt do anything since back end just doesnt work, purely decorative
+
+)}  
   </div>
 );
+
 
 };
 

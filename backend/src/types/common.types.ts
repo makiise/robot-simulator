@@ -24,7 +24,7 @@ export interface Coordinate {
     cols?: number;
     selectedStrategy?: 'NEAREST_ROBOT_BASIC' | 'ROUND_ROBIN_BASIC'; 
     currentRoundRobinIndex?: number; // for round robin
-    tickCount?: number; 
+    tickCount: number; 
   }
   export interface GridCell {
     content: CellContentType;

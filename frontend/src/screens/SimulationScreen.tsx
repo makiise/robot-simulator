@@ -104,7 +104,13 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ onReset }) => {
       {simulationState.gameStatus === 'LOST' && <h2>Game Over!</h2>}
       
       {/* 4. BASIC INFORMATION DISPLAY (F.F19) */}
-      <InfoPanel robots={simulationState.robots} />
+      <InfoPanel
+        robots={simulationState.robots}
+        tickCount={simulationState.tickCount}
+        currentBudget={simulationState.currentBudget}
+        tasks={simulationState.tasks}
+      />
+
 
       <GridDisplay 
         gridData={simulationState.grid} 

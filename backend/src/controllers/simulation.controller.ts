@@ -22,6 +22,7 @@ interface SimulationState {
   gameStatus: 'SETUP' | 'RUNNING' | 'PAUSED' | 'WON' | 'LOST';
   rows?: number; 
   cols?: number; 
+  tickCount: number;
 }
 
 let currentSimulationState: SimulationState = {
@@ -29,6 +30,7 @@ let currentSimulationState: SimulationState = {
   tasks: [],
   isRunning: false,
   gameStatus: 'SETUP',
+  tickCount: 0,
 };
 
 const gridService = new GridService();
@@ -63,6 +65,7 @@ export const configureSimulation = (req: Request, res: Response): void => {
       gameStatus: 'SETUP',
       rows: rows, 
       cols: cols, 
+      tickCount: 0,
     };
 
     res.status(200).json({

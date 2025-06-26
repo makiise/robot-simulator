@@ -28,6 +28,7 @@ export interface Robot {
   x: number;
   y: number;
   hp: number;
+  assignedTaskId?: number | null;
 }
 
 
@@ -41,6 +42,8 @@ export interface SimulationState {
   isRunning?: boolean;
   rows?: number;
   cols?: number;
+  tickCount: number;
+  
 }
 
 export interface Task {
@@ -48,6 +51,7 @@ export interface Task {
   type: string;
   x: number;
   y: number;
+  completed: boolean;
 }
 
 export interface SimulationState {
@@ -94,3 +98,5 @@ export const controlSimulation = async (action: 'PAUSE' | 'RESET') => {
 
   await axios.post(`${API_BASE_URL}/simulation/control`, { action });
 };
+
+

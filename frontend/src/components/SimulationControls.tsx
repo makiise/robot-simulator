@@ -8,9 +8,13 @@ interface SimulationControlsProps {
   onStart?: () => void;
   onPause?: () => void;
   onReset?: () => void;
+  selectedStrategy?: string;
+  onStrategyChange?: (strategy: string) => void;
 }
 
-const SimulationControls: React.FC<SimulationControlsProps> = ({ status, onStart, onPause, onReset }) => {
+
+const SimulationControls: React.FC<SimulationControlsProps> = ({ status, onStart, onPause, onReset, selectedStrategy,
+  onStrategyChange }) => {
   return (
     <div className={styles.container}>
       <h3 className={styles.heading}>Simulation Controls</h3>
@@ -19,9 +23,17 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({ status, onStart
         <>
           <div className={styles.controlGroup}>
             <label htmlFor="strategy-select" className={styles.label}>Select Strategy:</label>
-            <select id="strategy-select" name="strategy" className={styles.select}>
+            <select
+              id="strategy-select"
+              name="strategy"
+              className={styles.select}
+              value={selectedStrategy}
+              onChange={(e) => onStrategyChange?.(e.target.value)}
+            >
               <option value="NEAREST_BASIC">Strategy 1 (Nearest - Basic)</option>
+              <option value="ROUND_ROBIN">Strategy 2 (Round Robin)</option> 
             </select>
+
           </div>
           <div className={styles.buttonGroup}>
             <button onClick={onStart} className={styles.button}>Start Simulation</button>
