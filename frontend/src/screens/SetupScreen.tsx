@@ -1,4 +1,4 @@
-// In frontend/src/screens/SetupScreen.tsx
+
 
 import React, { useState } from 'react';
 
@@ -8,39 +8,52 @@ import GridDisplay from '../components/GridDisplay';
 import PlacementToolbar, { SelectableItem } from '../components/PlacementToolbar';
 import SimulationControls from '../components/SimulationControls';
 
-// API and Type Imports
+
 import { 
   configureSimulation, 
   placeRobot, 
   placeItem, 
   getSimulationState,
+  startSimulation, 
   SimulationState 
 } from '../services/api';
 
-const SetupScreen = () => {
+
+interface SetupScreenProps {
+  onStartSimulation: () => void;
+}
+
+
+const SetupScreen: React.FC<SetupScreenProps> = ({ onStartSimulation }) => {
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectableItem>(null);
+  const [simSpeed, setSimSpeed] = useState<number>(5);
+  const [selectedStrategy, setSelectedStrategy] = useState<string>('NEAREST_BASIC');
+
+
 
   const handleCreateGrid = async (rows: number, cols: number, initialBudget: number) => {
     try {
       const initialConfig = await configureSimulation(rows, cols, initialBudget);
+
       const fullInitialState: SimulationState = {
         grid: initialConfig.grid,
         currentBudget: initialConfig.budget,
         robots: [],
-        tasks: []
+        tasks: [],
+        gameStatus: 'SETUP',
+        tickCount: 0,
       };
+      
       setSimulationState(fullInitialState);
     } catch (error) {
       console.error("Failed to configure simulation:", error);
-      alert("Error setting up grid. Please ensure the backend server is running and accessible.");
+      alert("Error setting up grid.");
     }
   };
 
   const handleCellClick = async (x: number, y: number) => {
-    if (!selectedItem) {
-      return;
-    }
+    if (!selectedItem) return;
     try {
       if (selectedItem === 'CERBERUS_BASIC') {
         await placeRobot('CERBERUS_BASIC', x, y); 
@@ -50,7 +63,6 @@ const SetupScreen = () => {
         return;
       }
       const updatedState = await getSimulationState();
-      console.log("1. Received from getSimulationState API:", updatedState); 
       setSimulationState(updatedState);
       setSelectedItem(null); 
     } catch (error: any) {
@@ -58,31 +70,111 @@ const SetupScreen = () => {
       alert(`Placement Failed: ${error.response?.data?.message || error.message}`);
     }
   };
-  console.log("2. SetupScreen rendering with state:", simulationState);
+
+
+  const handleStartSimulation = async () => {
+  try {
+    await startSimulation(selectedStrategy);
+    onStartSimulation();
+  } catch (error) {
+    console.error("Failed to start simulation:", error);
+    alert("Could not start the simulation. Check the backend server.");
+  }
+};
+
 
   return (
-    <div>
-      {!simulationState ? (
-        <div>
-          <h2>Step 1: Configure Your Simulation</h2>
-          <GridConfigForm onConfigSubmit={handleCreateGrid} /> 
-        </div>
-      ) : (
-        <div>
-          <PlacementToolbar 
-            budget={simulationState.currentBudget} 
-            selectedItem={selectedItem}
-            onSelectItem={setSelectedItem}
-          />
-          <GridDisplay 
+  <div>
+    {!simulationState ? (
+      <div>
+        <h2>Step 1: Configure Your Simulation</h2>
+        <GridConfigForm onConfigSubmit={handleCreateGrid} />
+      </div>
+    ) : (
+      <div
+        style={{
+          display: 'flex',
+          gap: '20px',
+          alignItems: 'stretch',
+        }}
+      >
+        <div style={{ flex: 2 }}>
+          <GridDisplay
             gridData={simulationState.grid}
             onCellClick={handleCellClick}
           />
-          <SimulationControls />
         </div>
-      )}
-    </div>
-  );
+
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            height: '100%',
+            marginTop: '20px',
+          }}
+        >
+          <div style={{ flex: 2 }}>
+            <SimulationControls
+              status="SETUP"
+              onStart={handleStartSimulation}
+              selectedStrategy={selectedStrategy}
+              onStrategyChange={setSelectedStrategy}
+            />
+
+          </div>
+          <div style={{ flex: 1 }}>
+            <PlacementToolbar
+              budget={simulationState.currentBudget}
+              selectedItem={selectedItem}
+              onSelectItem={setSelectedItem}
+            />
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Decorative Speed Slider */}
+    {simulationState && (
+      <div style={{ marginTop: '30px' }}>
+        <h3>Simulation Speed (decorative only)</h3>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={simSpeed}
+          onChange={(e) => setSimSpeed(Number(e.target.value))}
+          style={{ width: '300px' }}
+        />
+        <span style={{ marginLeft: '10px' }}>
+          Speed: {simSpeed}
+        </span>
+
+      </div>
+    )}
+    {simulationState && (simulationState.gameStatus === 'WON' || simulationState.gameStatus === 'LOST') && (
+  <div style={{
+    position: 'fixed',
+    top: '30%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    color: 'white',
+    padding: '40px 60px',
+    fontSize: '36px',
+    borderRadius: '12px',
+    textAlign: 'center',
+    zIndex: 1000
+  }}>
+    {simulationState.gameStatus === 'WON' ? '🎉 You Won! 🎉' : '💀 Game Over! 💀'}
+  </div> // End of won/lost message, but it doesnt do anything since back end just doesnt work, purely decorative
+
+)}  
+  </div>
+);
+
+
 };
 
 export default SetupScreen;
