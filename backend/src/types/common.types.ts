@@ -30,7 +30,7 @@ export interface Coordinate {
     content: CellContentType;
     robotId?: string; // ID of the robot in this cell if there exists any
     taskId?: string;  // taskID att this cell (if there exists any)
-    // package destination coordinates might be added later
+    // package destination coordinates might be added
   }
   
   export type GridData = GridCell[][]; // 2D grid

@@ -15,6 +15,68 @@ import {
     constructor() {
       this.robotService = new RobotService();
     }
+
+
+    public assignTaskRoundRobin(state: SimulationState): void {
+        if (!state.tasks || !state.robots || state.robots.length === 0) {
+          return;
+        }
+    
+        const unassignedGarbageTasks = state.tasks.filter(
+          (task) => task.type === BasicTaskType.GARBAGE_BASIC
+          // In a more robust system, you'd check task.status
+        );
+    
+        const allRobots = state.robots;
+        const robotCount = allRobots.length;
+    
+        if (unassignedGarbageTasks.length === 0 || robotCount === 0) {
+          return; // No tasks to assign or no robots
+        }
+    
+        const startIndex = state.currentRoundRobinIndex ?? 0;
+    
+        for (let i = 0; i < robotCount; i++) {
+          const robotIndex = (startIndex + i) % robotCount;
+          const robot = allRobots[robotIndex];
+    
+          // Check if this robot is available
+          if (robot.status !== RobotStatus.IDLE || robot.hp <= 0) {
+            continue; // This robot is busy or dead
+          }
+    
+          // we found the next available robot in the sequenc and must find the best task for it.
+          let closestTask: BasicTask | null = null;
+          let minDistance = Infinity;
+    
+          for (const task of unassignedGarbageTasks) {
+            const distance = this.calculateManhattanDistance(robot, task);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestTask = task;
+            }
+          }
+    
+          if (closestTask) {
+            console.log(`Round Robin: Assigning task ${closestTask.id} to robot ${robot.id} (Distance: ${minDistance})`);
+    
+            robot.assignedTaskId = closestTask.id;
+            robot.status = RobotStatus.MOVING_TO_TASK;
+    
+            const taskIndexInLocalArray = unassignedGarbageTasks.findIndex(t => t.id === closestTask!.id);
+            if(taskIndexInLocalArray > -1) {
+                unassignedGarbageTasks.splice(taskIndexInLocalArray, 1);
+            }
+    
+            state.currentRoundRobinIndex = (robotIndex + 1) % robotCount;
+    
+            //assign 1 task per tick in round-robin
+            return;
+          }
+    
+          
+        }
+      }
   
     /**
      * calculate the Manhattan distance 
