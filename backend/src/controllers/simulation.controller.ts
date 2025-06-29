@@ -3,6 +3,7 @@ import { GridService } from '@/services/grid.service';
 import {
   GridData,
   BasicRobot,
+  RobotStatus,
   BasicTask,
   CellContentType,
   BasicTaskType,
@@ -111,13 +112,17 @@ export const placeRobotController = (req: Request, res: Response): void => {
     }
 
     // create robot and place it
+    
     const newRobotId = generateRobotId();
+    
     const newRobot: BasicRobot = {
       id: newRobotId,
       type: 'CERBERUS_BASIC',
       x,
       y,
-      hp: 150, //dflt hp for cerberus is 150
+      hp: 150,
+      status: RobotStatus.IDLE, //  new robots start as IDLE
+      assignedTaskId: undefined, //new robots have no task
     };
 
     currentSimulationState.robots.push(newRobot);
@@ -138,6 +143,8 @@ export const placeRobotController = (req: Request, res: Response): void => {
     res.status(500).json({ message: 'Failed to place robot.' });
   }
 };
+
+
 
 
 export const placeItemController = (req: Request, res: Response): void => {

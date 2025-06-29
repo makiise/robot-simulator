@@ -38,11 +38,19 @@ export interface Coordinate {
   //robot type
   export interface BasicRobot {
     id: string;
-    type: 'CERBERUS_BASIC'; // first type, the strongest robot : cerberus
+    type: 'CERBERUS_BASIC' | 'JESUS_OF_SUBURBIA' | 'CALCIFER'; //
     x: number;
     y: number;
     hp: number;
-    // assignedTaskId?: string; // add later.
+    status: RobotStatus;
+    assignedTaskId?: string;
+  }
+
+  export enum RobotStatus {
+    IDLE = 'IDLE',
+    MOVING_TO_TASK = 'MOVING_TO_TASK',
+    PERFORMING_TASK = 'PERFORMING_TASK', 
+    DEAD = 'DEAD',
   }
   
   //task type
