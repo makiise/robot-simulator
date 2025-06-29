@@ -1,4 +1,4 @@
-// src/services/simulation.service.ts
+import { TaskAssignmentService } from './taskAssignment.service'; 
 import {
     SimulationState,
     BasicRobot,
@@ -15,15 +15,66 @@ import {
     private gridService: GridService;
     private robotService: RobotService;
     private taskService: TaskService;
-    // private taskAssignmentService: TaskAssignmentService; // will add later
+    private taskAssignmentService: TaskAssignmentService; 
   
     constructor() {
       this.gridService = new GridService();
       this.robotService = new RobotService();
       this.taskService = new TaskService();
-      // this.taskAssignmentService = new TaskAssignmentService();
+      this.taskAssignmentService = new TaskAssignmentService();
     }
   
+    public runTick(state: SimulationState): void {
+        if (!state.grid || !state.robots || state.isRunning === false) {
+          return;
+        }
+    
+        console.log(`--- Running Tick: ${state.tickCount ?? 0} ---`);
+    
+        // processes Robot Deaths from previous ticks
+   
+        state.robots.forEach(robot => {
+            if (robot.hp <= 0 && robot.status !== RobotStatus.DEAD) {
+                this.handleRobotDeath(robot, state);
+            }
+        });
+    
+        // assigns available tasks to available IDLE robots
+        this.taskAssignmentService.assignTasksNearestRobot(state);
+
+        const livingRobots = state.robots.filter(robot => robot.status !== RobotStatus.DEAD);
+        for (const robot of livingRobots) {
+          this.processRobot(robot, state);
+        }
+    
+        // update Simulation Time
+        if (state.tickCount === undefined) {
+            state.tickCount = 0;
+        }
+        state.tickCount++;
+    
+        //Win/Loss Check 
+        // list of living robots after this tick's actions
+        const stillLivingRobots = state.robots.filter(robot => robot.status !== RobotStatus.DEAD);
+    
+        // WIN: No more garbage tasks left to do.
+        const remainingGarbageTasks = state.tasks?.filter(t => t.type === 'GARBAGE_BASIC') ?? [];
+        if (remainingGarbageTasks.length === 0) {
+          state.gameStatus = 'WON';
+          state.isRunning = false;
+          console.log('--- GAME WON! All garbage has been collected. ---');
+          return;
+        }
+    
+        // No living robots left, but there are still tasks.
+        if (stillLivingRobots.length === 0 && remainingGarbageTasks.length > 0) {
+          state.gameStatus = 'LOST';
+          state.isRunning = false;
+          console.log('--- GAME LOST! All robots have been destroyed. ---');
+          // The simulation interval on the controller will need to be stopped.
+          return;
+        }
+      }
     
     public processRobot(robot: BasicRobot, state: SimulationState): void {
       // 1. If robot is already dead, do nothing.
