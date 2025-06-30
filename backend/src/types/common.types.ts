@@ -68,3 +68,8 @@ export interface Coordinate {
     y: number;
     // isCompleted: boolean; // will add later
   }
+
+  export interface SimulationState {
+    tickCount?: number;
+    speedMultiplier?: number; 
+  }

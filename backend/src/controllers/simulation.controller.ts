@@ -1,4 +1,3 @@
-// src/controllers/simulation.controller.ts
 import { Request, Response } from 'express';
 import { GridService } from '@/services/grid.service';
 import { SimulationService } from '@/services/simulation.service';
@@ -10,14 +9,13 @@ import {
   CellContentType,
   BasicTaskType,
   Coordinate,
-  SimulationState, // <<< IMPORT THIS FROM common.types.ts
+  SimulationState,
 } from '@/types/common.types';
 import { generateRobotId, generateTaskId, resetIds } from '@/utils/idGenerator';
 
-// --- Constants ---
 const CERBERUS_BASIC_COST = 100;
+const BASE_TICK_RATE = 1000; 
 
-// --- Module-level State and Services (Declare these at the top) ---
 const gridService = new GridService();
 const simulationService = new SimulationService();
 let simulationInterval: NodeJS.Timeout | null = null;
@@ -29,11 +27,9 @@ let currentSimulationState: SimulationState = {
   gameStatus: 'SETUP',
   currentRoundRobinIndex: 0,
   tickCount: 0,
+  speedMultiplier: 1, 
 };
 
-// ====================================================================
-// --- Controller Functions ---
-// ====================================================================
 
 export const configureSimulation = (req: Request, res: Response): void => {
   try {
@@ -47,7 +43,6 @@ export const configureSimulation = (req: Request, res: Response): void => {
       return;
     }
 
-    // Stop any potentially running simulation before re-configuring
     if (simulationInterval) {
         clearInterval(simulationInterval);
         simulationInterval = null;
@@ -70,6 +65,7 @@ export const configureSimulation = (req: Request, res: Response): void => {
       currentRoundRobinIndex: 0,
       tickCount: 0,
       selectedStrategy: undefined,
+      speedMultiplier: 1, 
     };
 
     res.status(200).json({
@@ -116,7 +112,7 @@ export const placeRobotController = (req: Request, res: Response): void => {
     const newRobotId = generateRobotId();
     const newRobot: BasicRobot = {
       id: newRobotId,
-      type: 'CERBERUS_BASIC', // This can be replaced with `type` from req.body when you support more
+      type: 'CERBERUS_BASIC',
       x,
       y,
       hp: 150,
@@ -151,7 +147,7 @@ export const placeItemController = (req: Request, res: Response): void => {
       res.status(400).json({ message: 'Simulation not configured or not in setup phase.' });
       return;
     }
-    if (type !== BasicTaskType.GARBAGE_BASIC && type !== BasicTaskType.HEALTH_PACK) { // Allow placing health packs
+    if (type !== BasicTaskType.GARBAGE_BASIC && type !== BasicTaskType.HEALTH_PACK) {
       res.status(400).json({ message: 'Invalid item type for placement.' });
       return;
     }
@@ -167,13 +163,12 @@ export const placeItemController = (req: Request, res: Response): void => {
     const newTaskId = generateTaskId();
     const newItem: BasicTask = {
       id: newTaskId,
-      type: type as BasicTaskType, // Cast type from body
+      type: type as BasicTaskType,
       x,
       y,
     };
     
     currentSimulationState.tasks.push(newItem);
-    // Use a mapping for content type if needed
     const contentType = type === BasicTaskType.GARBAGE_BASIC ? CellContentType.GARBAGE : CellContentType.HEALTH_PACK;
     currentSimulationState.grid[y][x] = {
       content: contentType,
@@ -194,7 +189,7 @@ export const placeItemController = (req: Request, res: Response): void => {
 export const startSimulationController = (req: Request, res: Response): void => {
   try {
       const { strategy } = req.body;
-      const previousGameStatus = currentSimulationState.gameStatus; // Capture state BEFORE changes
+      const previousGameStatus = currentSimulationState.gameStatus;
 
       if (previousGameStatus !== 'SETUP' && previousGameStatus !== 'PAUSED') {
           res.status(400).json({ message: 'Simulation is already running or has ended.' });
@@ -207,34 +202,33 @@ export const startSimulationController = (req: Request, res: Response): void => 
           return;
       }
 
-     
-      // If starting fresh (from SETUP), reset the tick count.
-      // If resuming (from PAUSED), DO NOT reset the tick count.
       if (previousGameStatus === 'SETUP') {
           currentSimulationState.tickCount = 0;
       }
-      // ------------------------------------
 
-      // Now, update the state to running
       currentSimulationState.isRunning = true;
       currentSimulationState.gameStatus = 'RUNNING';
       currentSimulationState.selectedStrategy = effectiveStrategy;
+      if (currentSimulationState.speedMultiplier === undefined) {
+          currentSimulationState.speedMultiplier = 1;
+      }
 
 
       if (simulationInterval) clearInterval(simulationInterval);
 
-      const tickRate = 1000; // 1 tick per second
+      const tickRate = BASE_TICK_RATE / currentSimulationState.speedMultiplier;
+
       simulationInterval = setInterval(() => {
           simulationService.runTick(currentSimulationState);
 
-          if (currentSimulationState.isRunning === false) { // runTick sets this to false on win/loss
+          if (currentSimulationState.isRunning === false) {
               if (simulationInterval) clearInterval(simulationInterval);
               simulationInterval = null;
               console.log('Simulation interval stopped due to game end.');
           }
       }, tickRate);
 
-      console.log(`Simulation started/resumed with strategy: ${effectiveStrategy}`);
+      console.log(`Simulation started/resumed with strategy: ${effectiveStrategy} at speed ${currentSimulationState.speedMultiplier}x`);
       res.status(200).json({ message: 'Simulation started.' });
 
   } catch (error) {
@@ -244,7 +238,7 @@ export const startSimulationController = (req: Request, res: Response): void => 
 };
 
 export const controlSimulationController = (req: Request, res: Response): void => {
-    const { action } = req.body;
+    const { action, speedValue } = req.body; 
 
     switch (action) {
         case 'PAUSE':
@@ -261,7 +255,6 @@ export const controlSimulationController = (req: Request, res: Response): void =
             break;
         case 'RESUME':
             if (currentSimulationState.gameStatus === 'PAUSED') {
-                // Call start controller to resume. It has the logic to restart the interval.
                 startSimulationController(req, res);
             } else {
                 res.status(400).json({ message: 'Simulation is not paused.' });
@@ -272,7 +265,6 @@ export const controlSimulationController = (req: Request, res: Response): void =
                 clearInterval(simulationInterval);
                 simulationInterval = null;
             }
-            // Reset state to initial empty setup
             currentSimulationState = {
                 robots: [],
                 tasks: [],
@@ -280,11 +272,38 @@ export const controlSimulationController = (req: Request, res: Response): void =
                 gameStatus: 'SETUP',
                 currentRoundRobinIndex: 0,
                 tickCount: 0,
+                speedMultiplier: 1, 
             };
             resetIds();
             console.log('Simulation state has been reset.');
             res.status(200).json({ message: 'Simulation reset. Please configure the grid again.' });
             break;
+
+        case 'SET_SPEED':
+            if (typeof speedValue !== 'number' || speedValue <= 0) {
+                res.status(400).json({ message: 'Invalid speed value. Must be a positive number.' });
+                return;
+            }
+
+            console.log(`Setting simulation speed to ${speedValue}x`);
+            currentSimulationState.speedMultiplier = speedValue;
+
+            if (currentSimulationState.isRunning && simulationInterval) {
+                clearInterval(simulationInterval); 
+                
+                const newTickRate = BASE_TICK_RATE / currentSimulationState.speedMultiplier;
+                
+                simulationInterval = setInterval(() => { 
+                    simulationService.runTick(currentSimulationState);
+                    if (currentSimulationState.isRunning === false) {
+                        if (simulationInterval) clearInterval(simulationInterval);
+                        simulationInterval = null;
+                    }
+                }, newTickRate);
+            }
+            res.status(200).json({ message: `Speed set to ${speedValue}x`, newSpeed: speedValue });
+            break;
+
         default:
             res.status(400).json({ message: 'Invalid control action.' });
     }
