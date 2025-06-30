@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { configureSimulation, getSimulationState, placeRobotController, placeItemController } from '@/controllers/simulation.controller';
-// import other functions after creating them
+import { /* ..., */ controlSimulationController } from '@/controllers/simulation.controller';
+
+// ...
+
 
 const router = Router();
 
@@ -9,6 +12,9 @@ router.get('/state', getSimulationState); // frontend will use this to poll
 
 router.post('/place/robot', placeRobotController); 
 router.post('/place/item', placeItemController);   
+
+router.post('/control', controlSimulationController);
+
 
 // router.post('/place/robot', placeRobotController); 
 // router.post('/place/item', placeItemController); 

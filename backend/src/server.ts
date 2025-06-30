@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 
 // CORS 
+
+app.use('/api/simulation', simulationRoutes);
+
 const corsOptions = {
   origin: 'http://localhost:3000', // allows my  frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
