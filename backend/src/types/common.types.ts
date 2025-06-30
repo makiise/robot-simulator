@@ -32,18 +32,27 @@ export interface Coordinate {
     taskId?: string;  // taskID att this cell (if there exists any)
     // package destination coordinates might be added
   }
-  
-  export type GridData = GridCell[][]; // 2D grid
+  export type RobotType = 'CERBERUS_BASIC' | 'JESUS_OF_SUBURBIA' | 'CALCIFER';
+
+  export type GridData = GridCell[][];
   
   //robot type
   export interface BasicRobot {
     id: string;
-    type: 'CERBERUS_BASIC' | 'JESUS_OF_SUBURBIA' | 'CALCIFER'; //
+    type: RobotType;
     x: number;
     y: number;
-    hp: number;
+    hp: number; 
+    initialHp: number;
     status: RobotStatus;
     assignedTaskId?: string;
+    movementZone?: { 
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    };
+    carryingPackageId?: string; // ADD THIS: For package delivery later
   }
 
   export enum RobotStatus {
