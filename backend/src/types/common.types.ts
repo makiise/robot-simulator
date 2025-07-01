@@ -1,84 +1,104 @@
+
 export interface Coordinate {
-    x: number;
-    y: number;
-  }
-  
-  // what a cell can primarily contain
-  export enum CellContentType {
-    EMPTY = 'EMPTY',
-    ROBOT = 'ROBOT',
-    BOMB = 'BOMB',
-    GARBAGE = 'GARBAGE',
-    HEALTH_PACK = 'HEALTH_PACK', 
-    PACKAGE = 'PACKAGE',       // might add this one
-  }
-  export interface SimulationState { 
-    grid?: GridData;
-    robots: BasicRobot[];
-    tasks: BasicTask[]; // for garbage, health_points, package
-    initialBudget?: number;
-    currentBudget?: number;
-    isRunning: boolean;
-    gameStatus: 'SETUP' | 'RUNNING' | 'PAUSED' | 'WON' | 'LOST';
-    rows?: number;
-    cols?: number;
-    selectedStrategy?: 'NEAREST_ROBOT_BASIC' | 'ROUND_ROBIN_BASIC'; 
-    currentRoundRobinIndex?: number; // for round robin
-    tickCount?: number; 
-  }
-  export interface GridCell {
-    content: CellContentType;
-    robotId?: string; // ID of the robot in this cell if there exists any
-    taskId?: string;  // taskID att this cell (if there exists any)
-    // package destination coordinates might be added
-  }
-  export type RobotType = 'CERBERUS_BASIC' | 'JESUS_OF_SUBURBIA' | 'CALCIFER';
+  x: number;
+  y: number;
+}
 
-  export type GridData = GridCell[][];
-  
-  //robot type
-  export interface BasicRobot {
-    id: string;
-    type: RobotType;
-    x: number;
-    y: number;
-    hp: number; 
-    initialHp: number;
-    status: RobotStatus;
-    assignedTaskId?: string;
-    movementZone?: { 
-      minX: number;
-      maxX: number;
-      minY: number;
-      maxY: number;
-    };
-    carryingPackageId?: string; // ADD THIS: For package delivery later
-  }
+export enum CellContentType {
+  EMPTY = 'EMPTY',
+  ROBOT = 'ROBOT',
+  BOMB = 'BOMB',
+  GARBAGE = 'GARBAGE',
+  HEALTH_PACK = 'HEALTH_PACK',
+  PACKAGE = 'PACKAGE', 
+}
 
-  export enum RobotStatus {
-    IDLE = 'IDLE',
-    MOVING_TO_TASK = 'MOVING_TO_TASK',
-    PERFORMING_TASK = 'PERFORMING_TASK', 
-    DEAD = 'DEAD',
-  }
-  
-  //task type
-  export enum BasicTaskType {
-    BOMB = 'BOMB',
-    GARBAGE_BASIC = 'GARBAGE_BASIC',
-    HEALTH_PACK = 'HEALTH_PACK', 
-    PACKAGE_BASIC = 'PACKAGE_BASIC', // if I add packages
-  }
-  
-  export interface BasicTask {
-    id: string;
-    type: BasicTaskType;
-    x: number;
-    y: number;
-    // isCompleted: boolean; // will add later
-  }
+export interface GridCell {
+  content: CellContentType;
+  robotId?: string;
+  taskId?: string;
+}
 
-  export interface SimulationState {
-    tickCount?: number;
-    speedMultiplier?: number; 
-  }
+export type GridData = GridCell[][];
+
+// --- Robot Types ---
+
+export type RobotType = 'CERBERUS_BASIC' | 'JESUS_OF_SUBURBIA' | 'CALCIFER';
+
+export enum RobotStatus {
+  IDLE = 'IDLE',
+  MOVING_TO_TASK = 'MOVING_TO_TASK',
+  PERFORMING_TASK = 'PERFORMING_TASK',
+  DEAD = 'DEAD',
+}
+
+export interface BasicRobot {
+  id: string;
+  type: RobotType;
+  x: number;
+  y: number;
+  hp: number;
+  initialHp: number;
+  status: RobotStatus;
+  assignedTaskId?: string;
+  movementZone?: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+  carryingPackageId?: string; 
+}
+
+
+
+export enum TaskType {
+  GARBAGE = 'GARBAGE',
+  PACKAGE = 'PACKAGE',
+  HEALTH_PACK = 'HEALTH_PACK',
+}
+
+export enum TaskStatus {
+  UNASSIGNED = 'UNASSIGNED',
+  ASSIGNED = 'ASSIGNED',
+  IN_TRANSIT = 'IN_TRANSIT', // For packages
+}
+
+export type PackageSize = 'SMALL' | 'MEDIUM' | 'BIG';
+
+export interface Task {
+id: string;
+type: TaskType;
+x: number;
+y: number;
+status: TaskStatus; 
+assignedToRobotId?: string;
+
+packageDetails?: {
+  size: PackageSize;
+  destination: Coordinate;
+  pickupHpCost: number;
+};
+
+garbageDetails?: {
+  respawnTimer: number;
+  isCollected: boolean;
+};
+}
+
+
+export interface SimulationState {
+  grid?: GridData;
+  robots: BasicRobot[];
+  tasks: Task[]; 
+  initialBudget?: number;
+  currentBudget?: number;
+  isRunning: boolean;
+  gameStatus: 'SETUP' | 'RUNNING' | 'PAUSED' | 'WON' | 'LOST';
+  rows?: number;
+  cols?: number;
+  selectedStrategy?: 'NEAREST_ROBOT_BASIC' | 'ROUND_ROBIN_BASIC';
+  currentRoundRobinIndex?: number;
+  tickCount?: number;
+  speedMultiplier?: number;
+}

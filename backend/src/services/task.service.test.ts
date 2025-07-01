@@ -1,19 +1,18 @@
-// src/services/task.service.test.ts
 import { TaskService } from './task.service';
 import {
   SimulationState,
   BasicRobot,
   RobotStatus,
-  BasicTask,
-  BasicTaskType,
+  Task, 
+  TaskType, 
+  TaskStatus, 
   CellContentType,
 } from '@/types/common.types';
 
-// Mock the GridService since we don't need its real implementation here
 jest.mock('./grid.service', () => {
   return {
     GridService: jest.fn().mockImplementation(() => {
-      return { isWithinBounds: () => true }; // Assume all coordinates are always in bounds for this test
+      return { isWithinBounds: () => true }; 
     }),
   };
 });
@@ -21,33 +20,32 @@ jest.mock('./grid.service', () => {
 describe('TaskService', () => {
   let taskService: TaskService;
   let mockState: SimulationState;
-  let mockRobot: BasicRobot;
-  let mockGarbageTask: BasicTask;
+  let mockRobot: BasicRobot; 
+  let mockGarbageTask: Task; 
 
   beforeEach(() => {
     taskService = new TaskService();
 
-    // Set up a robot ready to collect garbage
     mockRobot = {
       id: 'robot-1',
       type: 'CERBERUS_BASIC',
       x: 3,
       y: 3,
       hp: 100,
-      initialHp: 100, // <<< THIS IS THE FIX
+      initialHp: 100, 
       status: RobotStatus.PERFORMING_TASK,
       assignedTaskId: 'task-garbage-1',
     };
 
-    // Set up the garbage task at the same location as the robot
     mockGarbageTask = {
       id: 'task-garbage-1',
-      type: BasicTaskType.GARBAGE_BASIC,
+      type: TaskType.GARBAGE, 
       x: 3,
       y: 3,
+      status: TaskStatus.ASSIGNED, 
+      assignedToRobotId: 'robot-1',
     };
 
-    // Set up a mock simulation state
     mockState = {
       robots: [mockRobot],
       tasks: [mockGarbageTask],
@@ -56,10 +54,9 @@ describe('TaskService', () => {
       ),
       gameStatus: 'RUNNING',
       isRunning: true,
-      speedMultiplier: 1, // Add any other required properties for SimulationState
+      speedMultiplier: 1, 
     };
 
-    // Place the garbage on the mock grid for accuracy
     if (mockState.grid) {
       mockState.grid[3][3] = {
         content: CellContentType.GARBAGE,
@@ -70,7 +67,6 @@ describe('TaskService', () => {
 
   it('should deduct HP from the robot when collecting garbage', () => {
     const initialHp = mockRobot.hp;
-    // Assuming the cost is defined elsewhere, but for testing we can hardcode it or import it
     const GARBAGE_COLLECTION_HP_COST = 3;
 
     taskService.collectGarbage(mockRobot, 'task-garbage-1', mockState);
@@ -92,14 +88,11 @@ describe('TaskService', () => {
 
     taskService.collectGarbage(mockRobot, 'task-garbage-1', mockState);
 
-    // The TaskService should clear the task aspect of the cell.
-    // So we check that the GARBAGE content is gone.
     expect(mockState.grid![3][3].content).toBe(CellContentType.EMPTY);
     expect(mockState.grid![3][3].taskId).toBeUndefined();
   });
 
   it('should return false and not change state if robot is not at the task location', () => {
-    // Move the robot away from the task
     mockRobot.x = 0;
     mockRobot.y = 0;
     const initialHp = mockRobot.hp;
@@ -107,7 +100,7 @@ describe('TaskService', () => {
     const result = taskService.collectGarbage(mockRobot, 'task-garbage-1', mockState);
 
     expect(result).toBe(false);
-    expect(mockRobot.hp).toBe(initialHp); // HP should not be deducted
-    expect(mockState.tasks).toHaveLength(1); // Task should not be removed
+    expect(mockRobot.hp).toBe(initialHp); 
+    expect(mockState.tasks).toHaveLength(1); 
   });
 });
