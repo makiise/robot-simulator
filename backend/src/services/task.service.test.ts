@@ -34,6 +34,7 @@ describe('TaskService', () => {
       x: 3,
       y: 3,
       hp: 100,
+      initialHp: 100, // <<< THIS IS THE FIX
       status: RobotStatus.PERFORMING_TASK,
       assignedTaskId: 'task-garbage-1',
     };
@@ -55,6 +56,7 @@ describe('TaskService', () => {
       ),
       gameStatus: 'RUNNING',
       isRunning: true,
+      speedMultiplier: 1, // Add any other required properties for SimulationState
     };
 
     // Place the garbage on the mock grid for accuracy
@@ -68,6 +70,7 @@ describe('TaskService', () => {
 
   it('should deduct HP from the robot when collecting garbage', () => {
     const initialHp = mockRobot.hp;
+    // Assuming the cost is defined elsewhere, but for testing we can hardcode it or import it
     const GARBAGE_COLLECTION_HP_COST = 3;
 
     taskService.collectGarbage(mockRobot, 'task-garbage-1', mockState);
@@ -90,7 +93,6 @@ describe('TaskService', () => {
     taskService.collectGarbage(mockRobot, 'task-garbage-1', mockState);
 
     // The TaskService should clear the task aspect of the cell.
-    // The SimulationService is responsible for updating the cell with the robot's presence.
     // So we check that the GARBAGE content is gone.
     expect(mockState.grid![3][3].content).toBe(CellContentType.EMPTY);
     expect(mockState.grid![3][3].taskId).toBeUndefined();

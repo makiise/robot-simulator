@@ -21,3 +21,5 @@ export const MOVEMENT_HP_COST = 1;
 export const GARBAGE_COLLECTION_HP_COST = 3;
 export const PACKAGE_PICKUP_HP_COST = 3; 
 export const FIXED_HEALTH_PACK_AMOUNT = 10;
+
+export const BASE_TICK_RATE = 1000;

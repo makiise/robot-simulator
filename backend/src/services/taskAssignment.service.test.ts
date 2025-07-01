@@ -21,10 +21,12 @@ describe('TaskAssignmentService', () => {
       // Arrange
       const robotFar: BasicRobot = {
         id: 'robot-far', type: 'CERBERUS_BASIC', x: 10, y: 10, hp: 100,
+        initialHp: 100, // <<< FIX
         status: RobotStatus.IDLE, assignedTaskId: undefined,
       };
       const robotClose: BasicRobot = {
         id: 'robot-close', type: 'CERBERUS_BASIC', x: 1, y: 1, hp: 100,
+        initialHp: 100, // <<< FIX
         status: RobotStatus.IDLE, assignedTaskId: undefined,
       };
       const garbageTask: BasicTask = {
@@ -42,10 +44,8 @@ describe('TaskAssignmentService', () => {
       taskAssignmentService.assignTasksNearestRobot(mockState);
 
       // Assert
-      // The closer robot should have the task assigned
       expect(robotClose.assignedTaskId).toBe('task-1');
       expect(robotClose.status).toBe(RobotStatus.MOVING_TO_TASK);
-      // The farther robot should remain idle
       expect(robotFar.assignedTaskId).toBeUndefined();
       expect(robotFar.status).toBe(RobotStatus.IDLE);
     });
@@ -54,10 +54,12 @@ describe('TaskAssignmentService', () => {
       // Arrange
       const robotBusy: BasicRobot = {
         id: 'robot-busy', type: 'CERBERUS_BASIC', x: 1, y: 1, hp: 100,
+        initialHp: 100, // <<< FIX
         status: RobotStatus.MOVING_TO_TASK, assignedTaskId: 'some-other-task',
       };
       const robotAvailable: BasicRobot = {
         id: 'robot-available', type: 'CERBERUS_BASIC', x: 10, y: 10, hp: 100,
+        initialHp: 100, // <<< FIX
         status: RobotStatus.IDLE, assignedTaskId: undefined,
       };
       const garbageTask: BasicTask = {
@@ -82,10 +84,12 @@ describe('TaskAssignmentService', () => {
         // Arrange
         const robotA: BasicRobot = {
             id: 'robot-A', type: 'CERBERUS_BASIC', x: 0, y: 0, hp: 100,
+            initialHp: 100, // <<< FIX
             status: RobotStatus.IDLE, assignedTaskId: undefined,
         };
         const robotB: BasicRobot = {
             id: 'robot-B', type: 'CERBERUS_BASIC', x: 10, y: 10, hp: 100,
+            initialHp: 100, // <<< FIX
             status: RobotStatus.IDLE, assignedTaskId: undefined,
         };
         const taskA: BasicTask = {
@@ -107,6 +111,41 @@ describe('TaskAssignmentService', () => {
         // Assert
         expect(robotA.assignedTaskId).toBe('task-A');
         expect(robotB.assignedTaskId).toBe('task-B');
+    });
+  });
+
+  // You can add tests for assignTaskRoundRobin here as well
+  describe('assignTaskRoundRobin', () => {
+    it('should assign a task to the first idle robot in sequence', () => {
+        // Arrange
+        const robotA: BasicRobot = {
+            id: 'robot-A', type: 'CERBERUS_BASIC', x: 0, y: 0, hp: 100,
+            initialHp: 100, // <<< FIX
+            status: RobotStatus.IDLE, assignedTaskId: undefined,
+        };
+        const robotB: BasicRobot = {
+            id: 'robot-B', type: 'CERBERUS_BASIC', x: 10, y: 10, hp: 100,
+            initialHp: 100, // <<< FIX
+            status: RobotStatus.IDLE, assignedTaskId: undefined,
+        };
+        const taskA: BasicTask = {
+            id: 'task-A', type: BasicTaskType.GARBAGE_BASIC, x: 5, y: 5,
+        };
+
+        mockState = {
+            robots: [robotA, robotB],
+            tasks: [taskA],
+            gameStatus: 'RUNNING', isRunning: true,
+            currentRoundRobinIndex: 0, // Start from the beginning
+        };
+
+        // Act
+        taskAssignmentService.assignTaskRoundRobin(mockState);
+
+        // Assert
+        expect(robotA.assignedTaskId).toBe('task-A');
+        expect(robotB.assignedTaskId).toBeUndefined();
+        expect(mockState.currentRoundRobinIndex).toBe(1); // Index should advance to next robot
     });
   });
 });
